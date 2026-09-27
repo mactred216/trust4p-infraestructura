@@ -1,0 +1,8 @@
+# Copia este archivo a terraform.tfvars (que está en .gitignore) y completa
+# los valores reales. Nunca subas terraform.tfvars al repositorio.
+
+project_id   = "trust-4p"
+region       = "us-central1"
+mongo_uri    = "mongodb+srv://usuario:clave@cluster.mongodb.net/trust4p"
+smtp_usuario = "correo@gmail.com"
+smtp_clave   = "contraseña-de-aplicacion-de-16-caracteres"
