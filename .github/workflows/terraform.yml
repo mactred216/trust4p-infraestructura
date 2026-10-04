@@ -1,0 +1,22 @@
+name: Terraform
+
+# Toda propuesta de cambio de infraestructura debe estar formateada y ser
+# válida. El `apply` no se automatiza: se ejecuta a mano por una persona del
+# equipo tras revisar el `plan` (ver README).
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false
+      - run: terraform validate
