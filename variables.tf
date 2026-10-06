@@ -28,14 +28,48 @@ variable "smtp_clave" {
   sensitive   = true
 }
 
-variable "imagen_api_negocio" {
-  description = "Imagen de trust4p-api-negocio en Artifact Registry (tag actualizado por el pipeline de CI, no por Terraform)."
+variable "smtp_remitente" {
+  description = "Remitente visible de los correos (por defecto, el usuario SMTP)."
   type        = string
-  default     = "us-central1-docker.pkg.dev/trust-4p/trust4p-imagenes/api-negocio:latest"
+  default     = ""
+}
+
+variable "url_frontend" {
+  description = "URL pública del frontend si se usa un dominio propio (con https://). Vacío = la URL por defecto de Cloud Run."
+  type        = string
+  default     = ""
+}
+
+variable "imagen_api_negocio" {
+  description = "Imagen inicial de trust4p-api-negocio: una imagen de ejemplo de Google que permite crear el servicio antes de que exista la real. Los despliegues los hace el pipeline de CI con el SHA del commit; Terraform no revierte ese cambio."
+  type        = string
+  default     = "us-docker.pkg.dev/cloudrun/container/hello"
 }
 
 variable "imagen_servicio_agente" {
-  description = "Imagen de trust4p-servicio-agente en Artifact Registry (tag actualizado por el pipeline de CI, no por Terraform)."
+  description = "Imagen inicial de trust4p-servicio-agente (ver imagen_api_negocio)."
   type        = string
-  default     = "us-central1-docker.pkg.dev/trust-4p/trust4p-imagenes/servicio-agente:latest"
+  default     = "us-docker.pkg.dev/cloudrun/container/hello"
+}
+
+variable "imagen_frontend" {
+  description = "Imagen inicial de trust4p-frontend (ver imagen_api_negocio)."
+  type        = string
+  default     = "us-docker.pkg.dev/cloudrun/container/hello"
+}
+
+variable "repositorios_github" {
+  description = "Repositorios de GitHub (propietario/nombre) autorizados a desplegar mediante Workload Identity Federation, sin llaves de servicio."
+  type        = list(string)
+  default = [
+    "mactred216/trust4p-api-negocio",
+    "mactred216/trust4p-servicio-agente",
+    "sroa544/trust4p-frontend",
+  ]
+}
+
+variable "rama_despliegue" {
+  description = "Única rama desde la que el pipeline puede autenticarse en GCP y desplegar."
+  type        = string
+  default     = "main"
 }
