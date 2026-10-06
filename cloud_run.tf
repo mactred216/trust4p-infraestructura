@@ -14,11 +14,24 @@
 # Terraform ignora el cambio de `image` (no lo revierte a :latest).
 
 resource "google_cloud_run_v2_service" "api_negocio" {
-  name       = "trust4p-api-negocio"
-  location   = var.region
-  project    = var.project_id
-  ingress    = "INGRESS_TRAFFIC_ALL"
-  depends_on = [google_project_service.apis]
+  name     = "trust4p-api-negocio"
+  location = var.region
+  project  = var.project_id
+  ingress  = "INGRESS_TRAFFIC_ALL"
+
+  # Cloud Run valida el acceso a los secretos al crear la revisión: los
+  # permisos deben existir antes.
+  depends_on = [
+    google_project_service.apis,
+    google_secret_manager_secret_iam_member.api_negocio_lee_mongo,
+    google_secret_manager_secret_iam_member.api_negocio_lee_smtp_usuario,
+    google_secret_manager_secret_iam_member.api_negocio_lee_smtp_clave,
+    google_secret_manager_secret_iam_member.api_negocio_lee_api_key,
+    google_secret_manager_secret_version.mongo_uri_valor,
+    google_secret_manager_secret_version.smtp_usuario_valor,
+    google_secret_manager_secret_version.smtp_clave_valor,
+    google_secret_manager_secret_version.api_key_servicios_valor,
+  ]
 
   template {
     service_account = google_service_account.api_negocio.email
@@ -127,10 +140,17 @@ resource "google_cloud_run_v2_service_iam_member" "api_negocio_publico" {
 }
 
 resource "google_cloud_run_v2_service" "servicio_agente" {
-  name       = "trust4p-servicio-agente"
-  location   = var.region
-  project    = var.project_id
-  depends_on = [google_project_service.apis]
+  name     = "trust4p-servicio-agente"
+  location = var.region
+  project  = var.project_id
+
+  depends_on = [
+    google_project_service.apis,
+    google_secret_manager_secret_iam_member.servicio_agente_lee_mongo,
+    google_secret_manager_secret_iam_member.servicio_agente_lee_api_key,
+    google_secret_manager_secret_version.mongo_uri_valor,
+    google_secret_manager_secret_version.api_key_servicios_valor,
+  ]
 
   template {
     service_account = google_service_account.servicio_agente.email
@@ -147,6 +167,7 @@ resource "google_cloud_run_v2_service" "servicio_agente" {
       image = var.imagen_servicio_agente
 
       resources {
+        cpu_idle = true
         limits = {
           cpu    = "1"
           memory = "1Gi"
@@ -222,9 +243,10 @@ resource "google_cloud_run_v2_service" "frontend" {
       image = var.imagen_frontend
 
       resources {
+        cpu_idle = true
         limits = {
           cpu    = "1"
-          memory = "256Mi"
+          memory = "512Mi"
         }
       }
 
