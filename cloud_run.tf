@@ -132,6 +132,9 @@ resource "google_cloud_run_v2_service" "api_negocio" {
 }
 
 resource "google_cloud_run_v2_service_iam_member" "api_negocio_publico" {
+  # Interruptor de encendido: sin el permiso de invocación pública los servicios
+  # no atienden peticiones y, al escalar a cero, no generan costo.
+  count    = var.servicios_encendidos ? 1 : 0
   name     = google_cloud_run_v2_service.api_negocio.name
   location = var.region
   project  = var.project_id
@@ -218,6 +221,9 @@ resource "google_cloud_run_v2_service" "servicio_agente" {
 }
 
 resource "google_cloud_run_v2_service_iam_member" "servicio_agente_publico" {
+  # Interruptor de encendido: sin el permiso de invocación pública los servicios
+  # no atienden peticiones y, al escalar a cero, no generan costo.
+  count    = var.servicios_encendidos ? 1 : 0
   name     = google_cloud_run_v2_service.servicio_agente.name
   location = var.region
   project  = var.project_id
@@ -268,9 +274,29 @@ resource "google_cloud_run_v2_service" "frontend" {
 }
 
 resource "google_cloud_run_v2_service_iam_member" "frontend_publico" {
+  # Interruptor de encendido: sin el permiso de invocación pública los servicios
+  # no atienden peticiones y, al escalar a cero, no generan costo.
+  count    = var.servicios_encendidos ? 1 : 0
   name     = google_cloud_run_v2_service.frontend.name
   location = var.region
   project  = var.project_id
   role     = "roles/run.invoker"
   member   = "allUsers"
+}
+
+# El interruptor convirtió estos tres recursos en listas de 0 o 1 elementos: se
+# indica el cambio de dirección para que Terraform no los destruya y recree.
+moved {
+  from = google_cloud_run_v2_service_iam_member.api_negocio_publico
+  to   = google_cloud_run_v2_service_iam_member.api_negocio_publico[0]
+}
+
+moved {
+  from = google_cloud_run_v2_service_iam_member.servicio_agente_publico
+  to   = google_cloud_run_v2_service_iam_member.servicio_agente_publico[0]
+}
+
+moved {
+  from = google_cloud_run_v2_service_iam_member.frontend_publico
+  to   = google_cloud_run_v2_service_iam_member.frontend_publico[0]
 }

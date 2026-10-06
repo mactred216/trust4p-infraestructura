@@ -73,3 +73,9 @@ variable "rama_despliegue" {
   type        = string
   default     = "main"
 }
+
+variable "servicios_encendidos" {
+  description = "true = los tres servicios atienden al público. false = se retira la invocación pública: nadie puede usarlos y, como escalan a cero, no generan costo. Se vuelve a encender con true; nada se borra (datos, secretos, imágenes)."
+  type        = bool
+  default     = true
+}

@@ -76,6 +76,23 @@ Requiere `gcloud` autenticado con permisos de propietario sobre `trust-4p` y Ter
 - **Aplicación**: integrar a `main` en cualquiera de los tres repositorios. El workflow verifica (lint, pruebas), construye la imagen con el SHA del commit, la sube y despliega la revisión nueva; luego comprueba que responde. Para volver atrás: `gcloud run services update-traffic SERVICIO --to-revisions=REVISION=100`.
 - **Infraestructura**: cambios por pull request (el CI ejecuta `fmt` y `validate`); el `apply` se ejecuta a mano tras revisar el `plan`. Terraform ignora el cambio de imagen de cada servicio (lo gestiona el pipeline).
 
+## Costos: apagar y volver a encender
+
+Los tres servicios escalan a cero: sin tráfico no consumen CPU ni memoria y no se cobran (solo se paga mientras atienden peticiones, y el nivel gratuito mensual cubre varias horas de uso). Para **no permitir ningún uso** —por ejemplo entre sustentaciones— se retira la invocación pública:
+
+```bash
+terraform apply -var="servicios_encendidos=false"      # apagar
+terraform apply                                        # encender (valor por defecto: true)
+```
+
+- **Apagado**: los tres servicios responden 403 a cualquiera y no generan consumo. **No se borra nada**: datos (MongoDB Atlas), secretos, imágenes y configuración siguen ahí, y los servicios conservan su última versión.
+- **Encendido**: vuelve a dar acceso público y todo funciona como antes, sin volver a desplegar. Dura segundos.
+- Lo que sigue costando apagado es mínimo (centavos al mes): imágenes en Artifact Registry y el bucket del estado. Atlas M0 es gratis; un clúster dedicado de Atlas se cobra aparte desde su panel.
+- Para **no gastar absolutamente nada** habría que destruir todo (`terraform destroy`); entonces se pierden servicios, secretos e imágenes y hay que repetir el primer despliegue. No es necesario para ahorrar.
+- Encendido de forma permanente (una instancia mínima por servicio, sin esperas de arranque) cuesta del orden de 70 USD/mes; no está configurado.
+
+Recomendado: una **alerta de presupuesto** en la consola de GCP (*Facturación → Presupuestos y alertas*), por ejemplo de 20 USD con avisos al 50, 90 y 100 %, para enterarse de cualquier consumo inesperado.
+
 ## Respaldos y operación
 
 Ver [docs/runbook-respaldo.md](docs/runbook-respaldo.md): respaldo y restauración de MongoDB, rotación de secretos y comprobaciones tras un despliegue.
